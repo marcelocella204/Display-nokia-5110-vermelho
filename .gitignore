@@ -1,0 +1,91 @@
+//Código adaptado, comentado e editado por Marcelo Cella
+//marcelocella204@gmail.com
+//parcerias:
+//http://viciadosemarduino.blogspot.com.br/
+//http://sttamp.com/loja
+//
+//Versão original do código:
+//http://educ8s.tv/LightMeter/SimpleLDR.ino
+//https://www.youtube.com/watch?v=gauKjcuN2K4
+// 
+// Leitor de tensão utilizando arduino + display nokia 5110 VERMELHO + potênciometro 10k.
+//
+//download biblioteca LCD5110_graph.h:
+//http://www.rinkydinkelectronics.com/library.php?id=47
+//
+// Ligue os pinos do lcd dessa maneira:
+//      SCK  - Pin 3
+//      MOSI - Pin 4
+//      DC   - Pin 5
+//      RST  - Pin 6
+//      CS   - Pin 7
+//
+#include <LCD5110_Graph.h> // inclui a biblioteca do display 5110
+
+LCD5110 myGLCD(3,4,5,6,7); // define a sequência de ligação do display
+
+extern unsigned char SmallFont[]; // define tamanho da fonte
+extern unsigned char TinyFont[];
+
+int Tenpin = A0; // cria variavel de leitura na porta A0 
+char tenstring [6]; // define tamanho da string
+String str; 
+
+int tensao = 0; 
+
+double val; // cria variavel val
+double vall;// cria variavel vall
+
+void setup(){
+
+  myGLCD.InitLCD();
+  myGLCD.setFont(SmallFont);
+  
+  Serial.begin(9600); // inicia comunicação serial
+  pinMode(A0,INPUT); // define porta analogica A0 como a entrada da leitura
+}
+
+void loop(){
+
+  val = analogRead(A0); // Realiza a leitura
+  Serial.print("Tensao :"); // imprime a palavra tensão
+  vall = (val* 5.00/1023.00); // transforma leitura de bits para volts
+  Serial.println(vall); // imprime vall, valor já em volts
+  delay(1000); // tempo de aguardo até a proxima leitura, em milisegundos
+
+  myGLCD.clrScr(); // limpa lcd
+  myGLCD.update(); // atualiza lcd
+  
+  tensao = analogRead(Tenpin);
+  
+  tensao = map(val, 0, 1023, 0, 255); // define a relação entre bits de entrada e de saida no display
+
+  str = String(vall)+"V"; // imprime na tela o valor em volts + a letra V
+  str.toCharArray(tenstring,6); // define o tamanho da string d voltagem
+  
+  myGLCD.print("Tensao",CENTER,5); // define localização da palavra tensão (5 é a linha onde inicia)
+  myGLCD.print(tenstring,CENTER,15); // define localização tensão lida (15 é a linha onde inicia)
+
+//inicia processo de impressão da barra   
+  printBar();
+  fillBar(tensao);
+  
+  myGLCD.update();  
+  delay(100);
+  
+}
+
+void printBar() //imprimindo a barra
+{  
+  myGLCD.drawRect(0, 35, 63, 40); // ponto de inicio, borda de cima, comprimento total de pixels, borda de baixo
+  myGLCD.update(); 
+}
+
+void fillBar(int percent)
+{
+    percent = map(percent, 0, 1023, 0, 255); // relação da porcentagem de volts por pixels da barra    
+    myGLCD.drawLine(1, 36, percent, 36); //define as ultimas linhas do display para exibir a barra de porcentagem
+    myGLCD.drawLine(1, 37, percent, 37); // onde 1 é a coluna de inicio, 36,37,38 e 39 são as linhas.
+    myGLCD.drawLine(1, 38, percent, 38);
+    myGLCD.drawLine(1, 39, percent, 39);
+}
